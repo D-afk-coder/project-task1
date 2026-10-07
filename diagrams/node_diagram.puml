@@ -1,0 +1,45 @@
+' node_diagram.puml
+'
+' ROS Node Design Diagram for the MTRX3760 Project 1 maze simulation (A1),
+' drawn to the unit's Task 5 standard: one ellipse per running node, one
+' arrow per publish/subscribe connection, arrows labelled with their meaning.
+'
+' Turtlebot3Drive      our right wall follower (turtlebot3_drive.cpp)
+' RosGzBridge          ros_gz_bridge parameter_bridge: carries the simulated
+'                      robot's laser, odometry and joint data out of Gazebo
+'                      and the velocity command into it
+' ImageBridge          ros_gz_image image_bridge: carries the simulated
+'                      camera image out of Gazebo
+' RobotStatePublisher  turns wheel joint angles into the pose of every link
+' RViz                 displays the laser scan, camera image and path driven
+'
+' Everything except Turtlebot3Drive is started by turtlebot3_maze.launch.py.
+' On the physical robot, RosGzBridge and ImageBridge are replaced by the
+' robot's own driver nodes; Turtlebot3Drive's two connections are unchanged.
+
+@startuml
+skinparam shadowing false
+skinparam usecase {
+  BackgroundColor White
+  BorderColor Black
+  FontSize 13
+}
+skinparam ArrowFontSize 12
+skinparam nodesep 40
+skinparam ranksep 55
+
+usecase "RosGzBridge" as Bridge
+usecase "Turtlebot3Drive" as Drive
+usecase "ImageBridge" as Image
+usecase "RobotStatePublisher" as StatePub
+usecase "RViz" as Rviz
+
+Bridge --> Drive : laser_scan
+Drive --> Bridge : velocity_command
+
+Bridge --> StatePub : wheel_joint_angles
+Bridge --> Rviz : laser_scan
+Bridge --> Rviz : robot_odometry
+StatePub --> Rviz : robot_link_poses
+Image --> Rviz : camera_image
+@enduml

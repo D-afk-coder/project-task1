@@ -13,31 +13,39 @@
 // limitations under the License.
 //
 // Authors: Taehun Lim (Darby), Ryan Shim
+//
+// Modified for MTRX3760 Project 1, "Hello, Turtlebots!".
+
+//-----------------------------------------------------------------------------
+// turtlebot3_drive.hpp
+//
+// Declares Turtlebot3Drive, a ROS 2 node that makes a TurtleBot 3 follow the
+// wall on its right hand side. The original ROBOTIS node drove around avoiding
+// obstacles; this version keeps its structure (one node, a laser subscriber,
+// a velocity publisher and an update timer) and replaces the behaviour.
+//
+// The node works in three steps, each in its own group of member functions:
+//
+//   Sense.  Each laser scan is reduced to three distances: the nearest thing
+//           ahead, to the front-right on the diagonal, and directly to the
+//           right.
+//
+//   Decide. The update timer picks a state from those distances. A wall ahead
+//           means turn left, no wall on the right means the wall has ended so
+//           arc right round its end, and otherwise follow the wall.
+//
+//   Act.    The state is turned into a forward and a turning speed, which are
+//           published as a velocity command.
+//
+// The node assumes the robot starts with a wall on its right.
+//-----------------------------------------------------------------------------
 
 #ifndef TURTLEBOT3_GAZEBO__TURTLEBOT3_DRIVE_HPP_
 #define TURTLEBOT3_GAZEBO__TURTLEBOT3_DRIVE_HPP_
 
-#include <geometry_msgs/msg/twist.hpp>
-#include <nav_msgs/msg/odometry.hpp>
+#include <geometry_msgs/msg/twist_stamped.hpp>
 #include <rclcpp/rclcpp.hpp>
 #include <sensor_msgs/msg/laser_scan.hpp>
-#include <tf2/LinearMath/Matrix3x3.hpp>
-#include <tf2/LinearMath/Quaternion.hpp>
-
-#define DEG2RAD (M_PI / 180.0)
-#define RAD2DEG (180.0 / M_PI)
-
-#define CENTER 0
-#define LEFT   1
-#define RIGHT  2
-
-#define LINEAR_VELOCITY  0.3
-#define ANGULAR_VELOCITY 1.5
-
-#define GET_TB3_DIRECTION 0
-#define TB3_DRIVE_FORWARD 1
-#define TB3_RIGHT_TURN    2
-#define TB3_LEFT_TURN     3
 
 class Turtlebot3Drive : public rclcpp::Node
 {
@@ -46,25 +54,53 @@ public:
   ~Turtlebot3Drive();
 
 private:
+  // What the robot is doing about the wall on its right
+  enum DriveState
+  {
+    WAIT_FOR_SCAN,  // no usable laser data yet, or it has stopped: stay still
+    FOLLOW_WALL,    // wall on the right: hold a set distance from it
+    TURN_LEFT,      // wall ahead: turn on the spot until the way is clear
+    SEEK_WALL       // wall on the right has ended: arc right round its end
+  };
+
   // ROS topic publishers
-  rclcpp::Publisher<geometry_msgs::msg::Twist>::SharedPtr cmd_vel_pub_;
+  rclcpp::Publisher<geometry_msgs::msg::TwistStamped>::SharedPtr cmd_vel_pub_;
 
   // ROS topic subscribers
   rclcpp::Subscription<sensor_msgs::msg::LaserScan>::SharedPtr scan_sub_;
-  rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr odom_sub_;
-
-  // Variables
-  double robot_pose_;
-  double prev_robot_pose_;
-  double scan_data_[3];
 
   // ROS timer
   rclcpp::TimerBase::SharedPtr update_timer_;
 
-  // Function prototypes
-  void update_callback();
-  void update_cmd_vel(double linear, double angular);
+  // Nearest obstacle in each direction of interest, from the latest scan [m]
+  double front_dist_;
+  double front_right_dist_;
+  double right_dist_;
+
+  // When the latest usable scan arrived, so a silent lidar stops the robot
+  rclcpp::Time last_scan_time_;
+  bool scan_received_;
+
+  // Current behaviour
+  DriveState state_;
+
+  // Sense
   void scan_callback(const sensor_msgs::msg::LaserScan::SharedPtr msg);
-  void odom_callback(const nav_msgs::msg::Odometry::SharedPtr msg);
+  double nearest_in_sector(
+    const sensor_msgs::msg::LaserScan & scan,
+    double bearing_deg,
+    double half_width_deg) const;
+  bool scan_is_fresh() const;
+
+  // Decide
+  void update_callback();
+  DriveState choose_state() const;
+  double front_right_gap() const;
+  double follow_wall_turn_rate() const;
+  void change_state(DriveState new_state);
+  const char * state_name(DriveState state) const;
+
+  // Act
+  void update_cmd_vel(double linear, double angular);
 };
 #endif  // TURTLEBOT3_GAZEBO__TURTLEBOT3_DRIVE_HPP_

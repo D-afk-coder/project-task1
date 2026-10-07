@@ -1,0 +1,27 @@
+' uml_class_diagram.puml
+'
+' Simplified UML class diagram for the turtlebot3_drive executable, drawn to
+' the unit's standard (Lec 2A): classes and their relationships only, with no
+' member variables or functions, and the ROS classes our class relates to.
+'
+' Turtlebot3Drive is a Node (inheritance). It has a Publisher for the velocity
+' command, a Subscription for the laser scan and a TimerBase for its update
+' loop (composition): it creates all three in its constructor and they are
+' destroyed with it.
+
+@startuml
+skinparam classAttributeIconSize 0
+skinparam style strictuml
+hide empty members
+
+class Turtlebot3Drive
+class "rclcpp::Node" as Node
+class "rclcpp::Publisher" as Publisher
+class "rclcpp::Subscription" as Subscription
+class "rclcpp::TimerBase" as TimerBase
+
+Turtlebot3Drive -up-|> Node
+Publisher -up-* Turtlebot3Drive
+Subscription -up-* Turtlebot3Drive
+TimerBase -up-* Turtlebot3Drive
+@enduml
