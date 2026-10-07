@@ -33,10 +33,20 @@
 
 
 //-----------------------------------------------------------------------------
-int main( int argc, char* argv[] )
+int main(
+    int argc,
+    char* argv[] )
 {
-    rclcpp::init( argc, argv );
-    rclcpp::spin( std::make_shared<CWallFollowerNode>() );
+    rclcpp::init(
+        argc,
+        argv );
+
+    std::shared_ptr<CWallFollowerNode> WallFollowerNode =
+        std::make_shared<CWallFollowerNode>();
+
+    rclcpp::spin(
+        WallFollowerNode );
+
     rclcpp::shutdown();
 
     return 0;
