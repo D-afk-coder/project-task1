@@ -13,121 +13,31 @@
 // limitations under the License.
 //
 // Authors: Taehun Lim (Darby), Ryan Shim
-//
-// Modified for MTRX3760 Project 1, "Hello, Turtlebots!".
 
 //-----------------------------------------------------------------------------
 // turtlebot3_drive.cpp
 //
-// Implements Turtlebot3Drive, the right wall follower. See the header for how
-// the node is organised.
+// MTRX3760 Project 1, right wall follower.
+//
+// Entry point for the turtlebot3_drive executable. Starts ROS and runs one
+// CWallFollowerNode until the program is stopped.
+//
+// Run with:  ros2 run turtlebot3_gazebo turtlebot3_drive
 //-----------------------------------------------------------------------------
 
-#include "turtlebot3_gazebo/turtlebot3_drive.hpp"
+#include "turtlebot3_gazebo/CWallFollowerNode.h"
 
-#include <chrono>
-#include <functional>
 #include <memory>
-#include <string>
+
+#include <rclcpp/rclcpp.hpp>
+
 
 //-----------------------------------------------------------------------------
-// Constants
-//-----------------------------------------------------------------------------
-const std::chrono::milliseconds UPDATE_PERIOD(50);
-const int STALE_WARNING_PERIOD_MS = 2000;
-
-//-----------------------------------------------------------------------------
-// Constructor and destructor
-//-----------------------------------------------------------------------------
-Turtlebot3Drive::Turtlebot3Drive()
-: Node("turtlebot3_drive_node")
+int main( int argc, char* argv[] )
 {
-  /************************************************************
-  ** Initialise ROS publishers and subscribers
-  ************************************************************/
-  rclcpp::QoS qos = rclcpp::QoS(rclcpp::KeepLast(10));
+    rclcpp::init( argc, argv );
+    rclcpp::spin( std::make_shared<CWallFollowerNode>() );
+    rclcpp::shutdown();
 
-  // Initialise publishers. ROS 2 Jazzy TurtleBot3 packages, in simulation and
-  // on the robot, expect a stamped velocity command.
-  cmd_vel_pub_ = create_publisher<geometry_msgs::msg::TwistStamped>("cmd_vel", qos);
-
-  // Initialise subscribers
-  scan_sub_ = create_subscription<sensor_msgs::msg::LaserScan>(
-    "scan",
-    rclcpp::SensorDataQoS(),
-    std::bind(&Turtlebot3Drive::scan_callback, this, std::placeholders::_1));
-
-  /************************************************************
-  ** Initialise ROS timers
-  ************************************************************/
-  update_timer_ = create_wall_timer(
-    UPDATE_PERIOD, std::bind(&Turtlebot3Drive::update_callback, this));
-
-  RCLCPP_INFO(get_logger(), "Turtlebot3 right wall follower has been initialised");
-}
-
-Turtlebot3Drive::~Turtlebot3Drive()
-{
-  RCLCPP_INFO(get_logger(), "Turtlebot3 right wall follower has been terminated");
-}
-
-/********************************************************************************
-** Sense: hand each laser scan to the lidar
-********************************************************************************/
-void Turtlebot3Drive::scan_callback(const sensor_msgs::msg::LaserScan::SharedPtr msg)
-{
-  lidar_.ReadScan(*msg, now().seconds());
-}
-
-/********************************************************************************
-** Decide: let the wall follower choose, and report any change of behaviour
-********************************************************************************/
-void Turtlebot3Drive::update_callback()
-{
-  const bool scan_is_fresh = lidar_.HasFreshScan(now().seconds());
-  const std::string previous_behaviour = follower_.GetBehaviourName();
-
-  const CVelocity velocity = follower_.Update(lidar_.GetDistances(), scan_is_fresh);
-
-  if (follower_.GetBehaviourName() != previous_behaviour) {
-    const CWallDistances & distances = lidar_.GetDistances();
-
-    RCLCPP_INFO(
-      get_logger(), "%s -> %s (front %.2f m, front-right gap %.2f m, right %.2f m)",
-      previous_behaviour.c_str(), follower_.GetBehaviourName().c_str(),
-      distances.mFront, distances.mFrontRightGap, distances.mRight);
-  }
-
-  if (!scan_is_fresh) {
-    RCLCPP_WARN_THROTTLE(
-      get_logger(), *get_clock(), STALE_WARNING_PERIOD_MS,
-      "No usable laser scan: robot stopped");
-  }
-
-  update_cmd_vel(velocity);
-}
-
-/********************************************************************************
-** Act: send the chosen speeds to the robot
-********************************************************************************/
-void Turtlebot3Drive::update_cmd_vel(const CVelocity & velocity)
-{
-  geometry_msgs::msg::TwistStamped cmd_vel;
-  cmd_vel.header.stamp = now();
-  cmd_vel.twist.linear.x = velocity.mLinear;
-  cmd_vel.twist.angular.z = velocity.mAngular;
-
-  cmd_vel_pub_->publish(cmd_vel);
-}
-
-/*******************************************************************************
-** Main
-*******************************************************************************/
-int main(int argc, char ** argv)
-{
-  rclcpp::init(argc, argv);
-  rclcpp::spin(std::make_shared<Turtlebot3Drive>());
-  rclcpp::shutdown();
-
-  return 0;
+    return 0;
 }

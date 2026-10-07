@@ -52,6 +52,7 @@ set(EXEC_NAME "turtlebot3_drive")
 
 add_executable(${EXEC_NAME}
   src/turtlebot3_drive.cpp
+  src/CWallFollowerNode.cpp
   src/CLidar.cpp
   src/CWallFollower.cpp
   src/CDriveBehaviour.cpp
