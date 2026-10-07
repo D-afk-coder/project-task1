@@ -71,32 +71,60 @@ CWallFollowerNode::~CWallFollowerNode()
 
 
 //-----------------------------------------------------------------------------
-void CWallFollowerNode::OnScan( const sensor_msgs::msg::LaserScan::SharedPtr apScan )
+void CWallFollowerNode::OnScan(
+    const sensor_msgs::msg::LaserScan::SharedPtr apScan )
 {
-    mLidar.ReadScan( *apScan, now().seconds() );
+    if( apScan != nullptr )
+    {
+        const double TimeSec =
+            now().seconds();
+
+        mLidar.ReadScan(
+            *apScan,
+            TimeSec );
+    }
 }
 
 
 //-----------------------------------------------------------------------------
+// Runs the wall-following controller using the latest laser measurements.
+// stale measurements cause CWallFollower to select the Stop behaviour.
 void CWallFollowerNode::OnUpdateTimer()
 {
-    const bool ScanIsFresh = mLidar.HasFreshScan( now().seconds() );
-    const std::string PreviousBehaviour = mFollower.GetBehaviourName();
+    const double NowSec =
+        now().seconds();
 
-    const CVelocity Velocity = mFollower.Update( mLidar.GetDistances(), ScanIsFresh );
+    const bool ScanIsFresh =
+        mLidar.HasFreshScan(
+            NowSec );
 
-    if( mFollower.GetBehaviourName() != PreviousBehaviour )
+    const std::string PreviousBehaviour =
+        mFollower.GetBehaviourName();
+
+    const CVelocity Velocity =
+        mFollower.Update(
+            mLidar.GetDistances(),
+            ScanIsFresh );
+
+    if(
+        mFollower.GetBehaviourName() !=
+        PreviousBehaviour )
     {
-        ReportBehaviourChange( PreviousBehaviour );
+        ReportBehaviourChange(
+            PreviousBehaviour );
     }
 
     if( !ScanIsFresh )
     {
-        RCLCPP_WARN_THROTTLE( get_logger(), *get_clock(), kStaleWarningPeriodMs,
-                              "No usable laser scan: robot stopped" );
+        RCLCPP_WARN_THROTTLE(
+            get_logger(),
+            *get_clock(),
+            kStaleWarningPeriodMs,
+            "No usable laser scan: robot stopped" );
     }
 
-    PublishVelocity( Velocity );
+    PublishVelocity(
+        Velocity );
 }
 
 
@@ -115,13 +143,21 @@ void CWallFollowerNode::PublishVelocity( const CVelocity& arVelocity )
 //-----------------------------------------------------------------------------
 // Reports the distances alongside the change, which shows why it happened.
 // This is the main tool for tuning on the robot.
+// Reports the latest wall distances whenever the active drive behaviour
+// changes. This is for when checking and tuning the controller
 //-----------------------------------------------------------------------------
-void CWallFollowerNode::ReportBehaviourChange( const std::string& arPreviousBehaviour ) const
+void CWallFollowerNode::ReportBehaviourChange(
+    const std::string& arPreviousBehaviour ) const
 {
-    const CWallDistances& Distances = mLidar.GetDistances();
+    const CWallDistances& Distances =
+        mLidar.GetDistances();
 
-    RCLCPP_INFO( get_logger(),
-                 "%s -> %s (front %.2f m, front-right gap %.2f m, right %.2f m)",
-                 arPreviousBehaviour.c_str(), mFollower.GetBehaviourName().c_str(),
-                 Distances.mFront, Distances.mFrontRightGap, Distances.mRight );
+    RCLCPP_INFO(
+        get_logger(),
+        "%s -> %s (front %.2f m, front-right gap %.2f m, right %.2f m)",
+        arPreviousBehaviour.c_str(),
+        mFollower.GetBehaviourName().c_str(),
+        Distances.mFront,
+        Distances.mFrontRightGap,
+        Distances.mRight );
 }
