@@ -26,9 +26,9 @@
 #include "turtlebot3_gazebo/turtlebot3_drive.hpp"
 
 #include <chrono>
-#include <cstring>
 #include <functional>
 #include <memory>
+#include <string>
 
 //-----------------------------------------------------------------------------
 // Constants
@@ -80,21 +80,21 @@ void Turtlebot3Drive::scan_callback(const sensor_msgs::msg::LaserScan::SharedPtr
 }
 
 /********************************************************************************
-** Decide: let the wall follower choose, and report any change of state
+** Decide: let the wall follower choose, and report any change of behaviour
 ********************************************************************************/
 void Turtlebot3Drive::update_callback()
 {
   const bool scan_is_fresh = lidar_.HasFreshScan(now().seconds());
-  const char * previous_state = follower_.GetStateName();
+  const std::string previous_behaviour = follower_.GetBehaviourName();
 
   const CVelocity velocity = follower_.Update(lidar_.GetDistances(), scan_is_fresh);
 
-  if (std::strcmp(follower_.GetStateName(), previous_state) != 0) {
+  if (follower_.GetBehaviourName() != previous_behaviour) {
     const CWallDistances & distances = lidar_.GetDistances();
 
     RCLCPP_INFO(
       get_logger(), "%s -> %s (front %.2f m, front-right gap %.2f m, right %.2f m)",
-      previous_state, follower_.GetStateName(),
+      previous_behaviour.c_str(), follower_.GetBehaviourName().c_str(),
       distances.mFront, distances.mFrontRightGap, distances.mRight);
   }
 

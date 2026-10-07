@@ -54,6 +54,11 @@ add_executable(${EXEC_NAME}
   src/turtlebot3_drive.cpp
   src/CLidar.cpp
   src/CWallFollower.cpp
+  src/CDriveBehaviour.cpp
+  src/CFollowWall.cpp
+  src/CTurnLeft.cpp
+  src/CSeekWall.cpp
+  src/CStop.cpp
 )
 target_link_libraries(${EXEC_NAME}
   ${geometry_msgs_TARGETS}
