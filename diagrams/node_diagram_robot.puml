@@ -1,0 +1,33 @@
+' node_diagram_robot.puml
+'
+' ROS Node Design Diagram for the wall follower on the physical TurtleBot 3,
+' drawn to the unit's Task 5 standard.
+'
+' WallFollower    our right wall follower, unchanged from simulation (the
+'                 turtlebot3_drive executable, run from the laptop)
+' LidarDriver     the robot's laser driver, started by the robot bringup
+' TurtleBot3Node  the robot's motor driver (turtlebot3_node), started by the
+'                 robot bringup
+'
+' Only the nodes our program talks to are shown. The wall follower's two
+' connections are the same as in simulation; only the nodes at the other end
+' change.
+
+@startuml
+skinparam shadowing false
+skinparam usecase {
+  BackgroundColor White
+  BorderColor Black
+  FontSize 13
+}
+skinparam ArrowFontSize 12
+skinparam nodesep 40
+skinparam ranksep 55
+
+usecase "LidarDriver" as Lidar
+usecase "WallFollower" as Follower
+usecase "TurtleBot3Node" as Motors
+
+Lidar --> Follower : laser_scan
+Follower --> Motors : velocity_command
+@enduml
