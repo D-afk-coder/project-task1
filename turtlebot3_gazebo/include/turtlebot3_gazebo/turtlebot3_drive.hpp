@@ -24,11 +24,11 @@
 // obstacles; this version keeps its structure (one node, a laser subscriber,
 // a velocity publisher and an update timer) and replaces the behaviour.
 //
-// The node works in three steps, each in its own group of member functions:
+// The node works in three steps:
 //
-//   Sense.  Each laser scan is reduced to three distances: the nearest thing
-//           ahead, to the front-right on the diagonal, and directly to the
-//           right.
+//   Sense.  A CLidar reduces each laser scan to three distances: the nearest
+//           thing ahead, the gap to the right wall seen along the front-right
+//           diagonal, and the nearest thing directly to the right.
 //
 //   Decide. The update timer picks a state from those distances. A wall ahead
 //           means turn left, no wall on the right means the wall has ended so
@@ -46,6 +46,8 @@
 #include <geometry_msgs/msg/twist_stamped.hpp>
 #include <rclcpp/rclcpp.hpp>
 #include <sensor_msgs/msg/laser_scan.hpp>
+
+#include "turtlebot3_gazebo/CLidar.h"
 
 class Turtlebot3Drive : public rclcpp::Node
 {
@@ -72,30 +74,18 @@ private:
   // ROS timer
   rclcpp::TimerBase::SharedPtr update_timer_;
 
-  // Nearest obstacle in each direction of interest, from the latest scan [m]
-  double front_dist_;
-  double front_right_dist_;
-  double right_dist_;
-
-  // When the latest usable scan arrived, so a silent lidar stops the robot
-  rclcpp::Time last_scan_time_;
-  bool scan_received_;
+  // Turns laser scans into wall distances
+  CLidar lidar_;
 
   // Current behaviour
   DriveState state_;
 
   // Sense
   void scan_callback(const sensor_msgs::msg::LaserScan::SharedPtr msg);
-  double nearest_in_sector(
-    const sensor_msgs::msg::LaserScan & scan,
-    double bearing_deg,
-    double half_width_deg) const;
-  bool scan_is_fresh() const;
 
   // Decide
   void update_callback();
   DriveState choose_state() const;
-  double front_right_gap() const;
   double follow_wall_turn_rate() const;
   void change_state(DriveState new_state);
   const char * state_name(DriveState state) const;
