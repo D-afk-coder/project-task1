@@ -53,6 +53,7 @@ set(EXEC_NAME "turtlebot3_drive")
 add_executable(${EXEC_NAME}
   src/turtlebot3_drive.cpp
   src/CLidar.cpp
+  src/CWallFollower.cpp
 )
 target_link_libraries(${EXEC_NAME}
   ${geometry_msgs_TARGETS}
