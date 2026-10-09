@@ -1,0 +1,45 @@
+@startuml
+
+title ROS Node Design Diagram
+
+skinparam shadowing false
+skinparam defaultTextAlignment center
+
+rectangle "LiDAR Source\nGazebo / TurtleBot LiDAR" as Lidar
+
+rectangle "Turtlebot3Drive\nROS Node\n\nturtlebot3_drive_node" as Drive
+
+rectangle "TurtleBot Base\nController" as Base
+
+rectangle "State Monitor\nDiagnostic Output" as Monitor
+
+
+' ROS communication
+
+Lidar --> Drive : /scan\nLaserScan
+
+Drive --> Base : /cmd_vel\nTwistStamped or Twist
+
+Drive --> Monitor : /wall_follower/state\nString
+
+
+' Description of the wall follower node
+
+note right of Drive
+Receives LiDAR scans
+
+Interprets scan data
+
+Calculates wall distances
+and wall heading
+
+Runs the right-wall-following
+state machine
+
+Publishes velocity commands
+
+Stops the robot when
+LiDAR data becomes stale
+end note
+
+@enduml

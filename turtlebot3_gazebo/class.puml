@@ -1,0 +1,68 @@
+@startuml
+
+title Simplified UML Class Diagram
+
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+
+' ROS base class
+class "rclcpp::Node" as Node
+
+' Main classes
+class Turtlebot3Drive
+class ScanInterpreter
+class ScanGeometry
+class WallFollowerController
+class WallFollowerConfig
+
+' Drive state hierarchy
+abstract class DriveState
+class FindWallState
+class FollowWallState
+class TurnLeftState
+class TurnRightState
+
+' Data classes
+class ScanData
+class RangeSummary
+class VelocityCommand
+class StateOutput
+
+
+' Inheritance
+Turtlebot3Drive --|> Node
+
+FindWallState --|> DriveState
+FollowWallState --|> DriveState
+TurnLeftState --|> DriveState
+TurnRightState --|> DriveState
+
+
+' Composition / ownership
+Turtlebot3Drive *-- ScanInterpreter
+Turtlebot3Drive *-- WallFollowerController
+
+ScanInterpreter *-- ScanGeometry
+
+WallFollowerController *-- WallFollowerConfig
+WallFollowerController *-- DriveState
+
+
+' Associations / uses
+Turtlebot3Drive --> ScanData
+Turtlebot3Drive --> RangeSummary
+Turtlebot3Drive --> VelocityCommand
+
+ScanInterpreter --> ScanData
+ScanInterpreter --> RangeSummary
+
+WallFollowerController --> RangeSummary
+WallFollowerController --> VelocityCommand
+
+DriveState --> WallFollowerConfig
+DriveState --> RangeSummary
+DriveState --> StateOutput
+
+StateOutput --> VelocityCommand
+
+@enduml
