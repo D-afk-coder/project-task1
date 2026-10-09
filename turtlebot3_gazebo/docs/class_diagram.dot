@@ -1,0 +1,69 @@
+// class_diagram.dot
+// Simplified UML class diagram for the turtlebot3_drive executable, in the
+// unit's notation: hollow triangle = inheritance, filled diamond =
+// composition, open arrow = association. No members are shown. Grey boxes
+// are ROS classes, blue boxes are ours.
+digraph classes {
+  graph [fontname="Helvetica", rankdir=TB, nodesep=0.35, ranksep=0.65, pad=0.3, splines=true];
+  node  [shape=box, style="rounded,filled", fillcolor="#cfe2f7", fontname="Helvetica", fontsize=16, margin="0.18,0.10"];
+  edge  [arrowsize=0.9];
+
+  // Row 1-2: the node and what it inherits from
+  RosNode         [label="rclcpp::Node", fillcolor="#e8e8e8"];
+  Turtlebot3Drive [label="Turtlebot3Drive"];
+
+  // Row 3: what the node owns
+  Subscription [label="rclcpp::Subscription\n<LaserScan>", fillcolor="#e8e8e8"];
+  PubStamped   [label="rclcpp::Publisher\n<TwistStamped>", fillcolor="#e8e8e8"];
+  PubTwist     [label="rclcpp::Publisher\n<Twist>", fillcolor="#e8e8e8"];
+  PubState     [label="rclcpp::Publisher\n<String>", fillcolor="#e8e8e8"];
+  Timer        [label="rclcpp::\nTimerBase", fillcolor="#e8e8e8"];
+  ScanInterpreter        [label="ScanInterpreter"];
+  WallFollowerController [label="WallFollowerController"];
+
+  // Row 4: what those own and use
+  ScanGeometry       [label="ScanGeometry"];
+  ScanData           [label="ScanData"];
+  RangeSummary       [label="RangeSummary"];
+  DriveState         [label="DriveState\n(abstract)"];
+  WallFollowerConfig [label="WallFollowerConfig"];
+
+  // Row 5: the behaviours and what they return
+  FindWallState   [label="FindWallState"];
+  FollowWallState [label="FollowWallState"];
+  TurnLeftState   [label="TurnLeftState"];
+  TurnRightState  [label="TurnRightState"];
+  VelocityCommand [label="VelocityCommand"];
+
+  {rank=same; Subscription; PubStamped; PubTwist; PubState; Timer;}
+  {rank=same; ScanInterpreter; WallFollowerController;}
+  {rank=same; ScanData; ScanGeometry; RangeSummary; DriveState; WallFollowerConfig;}
+  ScanData -> ScanGeometry -> RangeSummary -> DriveState -> WallFollowerConfig [style=invis];
+  {rank=same; FindWallState; FollowWallState; TurnLeftState; TurnRightState; VelocityCommand;}
+
+  // Inheritance (hollow triangle at the parent)
+  RosNode -> Turtlebot3Drive    [dir=back, arrowtail=empty];
+  DriveState -> FindWallState   [dir=back, arrowtail=empty];
+  DriveState -> FollowWallState [dir=back, arrowtail=empty];
+  DriveState -> TurnLeftState   [dir=back, arrowtail=empty];
+  DriveState -> TurnRightState  [dir=back, arrowtail=empty];
+
+  // Composition (filled diamond at the owner)
+  Turtlebot3Drive -> Subscription           [dir=back, arrowtail=diamond];
+  Turtlebot3Drive -> PubStamped             [dir=back, arrowtail=diamond];
+  Turtlebot3Drive -> PubTwist               [dir=back, arrowtail=diamond];
+  Turtlebot3Drive -> PubState               [dir=back, arrowtail=diamond];
+  Turtlebot3Drive -> Timer                  [dir=back, arrowtail=diamond];
+  Turtlebot3Drive -> ScanInterpreter        [dir=back, arrowtail=diamond, minlen=2];
+  Turtlebot3Drive -> WallFollowerController [dir=back, arrowtail=diamond, minlen=2];
+  ScanInterpreter -> ScanGeometry           [dir=back, arrowtail=diamond];
+  WallFollowerController -> DriveState         [dir=back, arrowtail=diamond];
+  WallFollowerController -> WallFollowerConfig [dir=back, arrowtail=diamond];
+
+  // Association (open arrow towards the class that is used)
+  ScanInterpreter -> ScanData       [arrowhead=vee];
+  ScanInterpreter -> RangeSummary   [arrowhead=vee];
+  DriveState -> RangeSummary        [arrowhead=vee];
+  DriveState -> WallFollowerConfig  [arrowhead=vee];
+  DriveState -> VelocityCommand     [arrowhead=vee];
+}

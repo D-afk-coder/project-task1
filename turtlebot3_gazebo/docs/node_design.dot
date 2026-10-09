@@ -1,0 +1,27 @@
+// node_design.dot
+// ROS node design diagram for the right wall follower. Ellipses are nodes,
+// boxes are topics, arrows show publish/subscribe direction, dashed means
+// debugging only.
+digraph node_design {
+  rankdir=TB;
+  graph [fontname="Helvetica", fontsize=14, nodesep=0.9, ranksep=0.55, pad=0.3];
+  node  [fontname="Helvetica", fontsize=15, margin="0.2,0.12"];
+  edge  [fontname="Helvetica", fontsize=13];
+
+  lidar [label="LiDAR driver\n(Gazebo sensor bridge, or\nSTL-19P driver on the robot)", shape=ellipse, style=filled, fillcolor="#e8e8e8"];
+  base  [label="Drive base\n(Gazebo DiffDrive bridge, or\nturtlebot3_node on the robot)", shape=ellipse, style=filled, fillcolor="#e8e8e8"];
+  human [label="Terminal / RViz\n(debugging only)", shape=ellipse, style="filled,dashed", fillcolor="#f5f5f5"];
+
+  wf [label="/turtlebot3_drive_node\n(turtlebot3_drive executable)", shape=ellipse, style="filled,bold", fillcolor="#cfe2f7", penwidth=2];
+
+  scan  [label="/scan\nsensor_msgs/LaserScan", shape=box];
+  cmd   [label="/cmd_vel\ngeometry_msgs/TwistStamped", shape=box];
+  state [label="/wall_follower/state\nstd_msgs/String", shape=box, style=dashed];
+
+  lidar -> scan;
+  scan  -> wf;
+  wf    -> cmd;
+  cmd   -> base;
+  wf    -> state [style=dashed];
+  state -> human [style=dashed];
+}

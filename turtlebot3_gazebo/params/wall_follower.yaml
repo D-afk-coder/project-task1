@@ -1,0 +1,43 @@
+# wall_follower.yaml
+# Parameters for the right wall follower (turtlebot3_drive). The values here
+# are the compiled-in defaults. Distances in metres, speeds in m/s, turn rates
+# in rad/s, angles in degrees. Change a value here and relaunch; with
+# colcon build --symlink-install no rebuild is needed.
+turtlebot3_drive_node:
+  ros__parameters:
+    # --- Robot interface ---------------------------------------------------
+    use_stamped_cmd_vel: true     # Jazzy default; false only if cmd_vel expects Twist
+    scan_timeout: 1.0             # stop if no scan for this long [s]
+    status_period: 1.0            # status line every this many seconds (0 = off)
+
+    # --- LiDAR mounting (check these on the real robot) ----------------------
+    lidar_yaw_offset_deg: 0.0     # where the LiDAR's 0 deg points, CCW from the robot's front
+    lidar_clockwise: false        # true if the scan's angles go clockwise
+
+    # --- Which beams count as front / right ----------------------------------
+    front_half_width_deg: 15.0
+    diagonal_offset_deg: 45.0
+    side_half_width_deg: 3.0
+    wall_sensing_range: 0.8
+    max_range: 3.5
+
+    # --- Following the wall ----------------------------------------------------
+    target_distance: 0.30
+    cruise_speed: 0.15
+    max_angular_speed: 1.0
+    distance_gain: 2.0
+    heading_gain: 1.5
+
+    # --- Wall ahead (inner corner) ---------------------------------------------
+    front_slow_distance: 0.70
+    front_stop_distance: 0.35     # must stay below front_clear_distance
+    front_clear_distance: 0.55
+    turn_speed: 0.8
+
+    # --- Wall ends (outer corner) ----------------------------------------------
+    wall_lost_distance: 0.60
+    wall_found_distance: 0.45     # must stay below wall_lost_distance
+    corner_speed: 0.12
+
+    # --- No wall nearby --------------------------------------------------------
+    search_speed: 0.12
